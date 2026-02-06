@@ -55,6 +55,10 @@ struct RingABell: ParsableCommand {
             }
             env.append("_RINGABELL=1")
 
+            var pathBuf = [CChar](repeating: 0, count: Int(PATH_MAX))
+            var size = UInt32(PATH_MAX)
+            _NSGetExecutablePath(&pathBuf, &size)
+
             var args: [UnsafeMutablePointer<CChar>?] =
                 (0..<Int(CommandLine.argc)).map { CommandLine.unsafeArgv[$0] }
             args.append(nil)
@@ -62,7 +66,7 @@ struct RingABell: ParsableCommand {
             var envp: [UnsafeMutablePointer<CChar>?] = env.map { strdup($0) }
             envp.append(nil)
 
-            execve(args[0]!, &args, &envp)
+            execve(pathBuf, &args, &envp)
             _exit(1)
         }
 
