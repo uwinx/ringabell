@@ -28,7 +28,9 @@ jobs:
 
       - name: Package
         run: |
-          tar czf ringabell-macos-arm64.tar.gz ringabell.app
+          mkdir ringabell-dist
+          mv ringabell.app ringabell-dist/
+          tar czf ringabell-macos-arm64.tar.gz ringabell-dist
           shasum -a 256 ringabell-macos-arm64.tar.gz > ringabell-macos-arm64.tar.gz.sha256
 
       - name: Upload artifact
