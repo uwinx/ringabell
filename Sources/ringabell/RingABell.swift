@@ -1,5 +1,6 @@
 import ArgumentParser
 import AppKit
+import Darwin
 
 @main
 struct RingABell: ParsableCommand {
@@ -27,6 +28,9 @@ struct RingABell: ParsableCommand {
     @Option(help: "URL/deeplink to open when notification is clicked")
     var url: String? = nil
 
+    @Option(help: "Notification icon (party, bell, sparkles, confetti, checkmark, star, rocket, fire)")
+    var icon: AppIcon = .party
+
     @Flag(help: "Skip macOS notification")
     var noNotification: Bool = false
 
@@ -37,6 +41,32 @@ struct RingABell: ParsableCommand {
         guard (0.1...5.0).contains(density) else {
             throw ValidationError("--density must be between 0.1 and 5.0")
         }
+    }
+
+    // Re-exec with clean environment to work around SIGBUS caused by
+    // terminal emulators (e.g. Alacritty + zsh) on Apple Silicon.
+    static func main() {
+        if getenv("_RINGABELL") == nil {
+            let pass = ["HOME", "PATH", "TMPDIR", "USER", "LOGNAME", "SHELL",
+                        "SSH_AUTH_SOCK", "LANG", "LC_ALL", "LC_CTYPE", "TERM"]
+            var env = pass.compactMap { k -> String? in
+                guard let v = getenv(k) else { return nil }
+                return "\(k)=\(String(cString: v))"
+            }
+            env.append("_RINGABELL=1")
+
+            var args: [UnsafeMutablePointer<CChar>?] =
+                (0..<Int(CommandLine.argc)).map { CommandLine.unsafeArgv[$0] }
+            args.append(nil)
+
+            var envp: [UnsafeMutablePointer<CChar>?] = env.map { strdup($0) }
+            envp.append(nil)
+
+            execve(args[0]!, &args, &envp)
+            _exit(1)
+        }
+
+        Self.main(nil)
     }
 
     func run() throws {
@@ -53,7 +83,8 @@ struct RingABell: ParsableCommand {
             duration: duration,
             density: density,
             showNotification: !noNotification,
-            url: url
+            url: url,
+            icon: icon
         )
 
         let app = NSApplication.shared

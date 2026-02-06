@@ -11,21 +11,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         super.init()
     }
 
-    // MARK: - NSApplicationDelegate
-
     func applicationDidFinishLaunching(_ notification: Notification) {
+        NSApplication.shared.applicationIconImage = config.icon.render()
         UNUserNotificationCenter.current().delegate = self
         showConfetti()
         SoundPlayer.play(named: config.soundName)
 
         if config.showNotification {
-            NotificationSender.send(title: "ringabell", body: config.message, url: config.url)
+            NotificationSender.send(title: "ringabell", body: config.message, url: config.url, icon: config.icon)
         }
 
         scheduleShutdown()
     }
-
-    // MARK: - Confetti
 
     private func showConfetti() {
         for screen in NSScreen.screens {
@@ -48,8 +45,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
     }
 
-    // MARK: - Lifecycle
-
     private func scheduleShutdown() {
         DispatchQueue.main.asyncAfter(deadline: .now() + config.duration) { [weak self] in
             self?.tearDownOverlay()
@@ -68,8 +63,6 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
         windows.removeAll()
     }
-
-    // MARK: - UNUserNotificationCenterDelegate
 
     nonisolated func userNotificationCenter(
         _ center: UNUserNotificationCenter,

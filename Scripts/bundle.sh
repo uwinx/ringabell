@@ -37,11 +37,18 @@ cat > "${CONTENTS}/Info.plist" << 'EOF'
     <string>1.0.0</string>
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>LSUIElement</key>
     <true/>
 </dict>
 </plist>
 EOF
 
+RESOURCES="${CONTENTS}/Resources"
+mkdir -p "$RESOURCES"
+swift "${SCRIPT_DIR}/generate-icon.swift" "🎉" "$RESOURCES"
+
+codesign --force --sign - "$MACOS/ringabell"
 codesign --force --sign - "$APP_BUNDLE"
 echo "Created ${APP_BUNDLE}"

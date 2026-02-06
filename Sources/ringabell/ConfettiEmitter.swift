@@ -3,8 +3,6 @@ import QuartzCore
 
 enum ConfettiEmitter {
 
-    // MARK: - Particle physics
-
     private static let initialVelocity: CGFloat  = 300
     private static let velocitySpread: CGFloat    = 150
     private static let gravity: CGFloat           = -150
@@ -17,8 +15,6 @@ enum ConfettiEmitter {
     private static let spinSpeed: CGFloat         = 3.0
     private static let spinVariance: CGFloat      = 6.0
     private static let emissionSpread: CGFloat    = .pi / 4
-
-    // MARK: - Public API
 
     static func makeLayer(
         screenSize: CGSize,
@@ -43,8 +39,6 @@ enum ConfettiEmitter {
         }
     }
 
-    // MARK: - Cell factory
-
     private static func makeCell(
         color: NSColor,
         shape: Shape,
@@ -68,8 +62,6 @@ enum ConfettiEmitter {
         cell.alphaSpeed = fadeRate
         return cell
     }
-
-    // MARK: - Shape rendering
 
     private enum Shape: CaseIterable {
         case rectangle, circle, triangle

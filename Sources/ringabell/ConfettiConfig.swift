@@ -1,4 +1,46 @@
 import AppKit
+import ArgumentParser
+
+enum AppIcon: String, CaseIterable, ExpressibleByArgument {
+    case party
+    case bell
+    case sparkles
+    case confetti
+    case checkmark
+    case star
+    case rocket
+    case fire
+
+    var emoji: String {
+        switch self {
+        case .party:     return "🎉"
+        case .bell:      return "🔔"
+        case .sparkles:  return "✨"
+        case .confetti:  return "🎊"
+        case .checkmark: return "✅"
+        case .star:      return "⭐"
+        case .rocket:    return "🚀"
+        case .fire:      return "🔥"
+        }
+    }
+
+    func render(size: CGFloat = 256) -> NSImage {
+        let image = NSImage(size: NSSize(width: size, height: size))
+        image.lockFocus()
+        let attrs: [NSAttributedString.Key: Any] = [
+            .font: NSFont.systemFont(ofSize: size * 0.8)
+        ]
+        let str = NSAttributedString(string: emoji, attributes: attrs)
+        let strSize = str.size()
+        str.draw(at: NSPoint(
+            x: (size - strSize.width) / 2,
+            y: (size - strSize.height) / 2
+        ))
+        image.unlockFocus()
+        return image
+    }
+
+}
 
 struct ConfettiConfig {
     static let defaultColors = "red,green,blue,yellow,orange,purple"
@@ -10,6 +52,7 @@ struct ConfettiConfig {
     let density: Double
     let showNotification: Bool
     let url: String?
+    let icon: AppIcon
 
     static func parseColors(_ csv: String) -> [NSColor] {
         csv.split(separator: ",")
@@ -38,7 +81,6 @@ struct ConfettiConfig {
         var h = hex.trimmingCharacters(in: .whitespacesAndNewlines)
         if h.hasPrefix("#") { h.removeFirst() }
 
-        // Expand 3-char shorthand: #F0A → #FF00AA
         if h.count == 3 {
             h = h.map { "\($0)\($0)" }.joined()
         }
