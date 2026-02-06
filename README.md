@@ -2,6 +2,12 @@
 
 macOS CLI that fires confetti, plays a sound, and sends a notification.
 
+## Install
+
+```
+brew install uwinx/tap/ringabell
+```
+
 ## Usage
 
 ```
