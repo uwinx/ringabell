@@ -14,7 +14,16 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     func applicationDidFinishLaunching(_ notification: Notification) {
         NSApplication.shared.applicationIconImage = config.icon.render()
         UNUserNotificationCenter.current().delegate = self
-        showConfetti()
+
+        switch config.effect {
+        case .confetti:
+            showConfetti()
+        case .pulse:
+            showPulse()
+        case .none:
+            break
+        }
+
         SoundPlayer.play(named: config.soundName)
 
         if config.showNotification {
@@ -45,12 +54,37 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
     }
 
+    private func showPulse() {
+        let color = config.colors.first ?? .white
+        for screen in NSScreen.screens {
+            let bounds = CGRect(origin: .zero, size: screen.frame.size)
+            let window = OverlayWindow(screen: screen)
+            let view = PulseView(frame: bounds, color: color)
+            window.contentView = view
+            window.orderFrontRegardless()
+            windows.append(window)
+            view.animate(duration: config.duration) { [weak self] in
+                self?.tearDownOverlay()
+            }
+        }
+    }
+
     private func scheduleShutdown() {
-        DispatchQueue.main.asyncAfter(deadline: .now() + config.duration) { [weak self] in
+        let visualDuration: Double
+        switch config.effect {
+        case .confetti:
+            visualDuration = config.duration
+        case .pulse:
+            visualDuration = config.duration
+        case .none:
+            visualDuration = 0.5
+        }
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + visualDuration) { [weak self] in
             self?.tearDownOverlay()
         }
 
-        let deadline = config.url != nil ? config.duration + 30 : config.duration
+        let deadline = config.url != nil ? visualDuration + 30 : visualDuration
         DispatchQueue.main.asyncAfter(deadline: .now() + deadline) {
             NSApplication.shared.terminate(nil)
         }

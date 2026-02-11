@@ -1,6 +1,12 @@
 import AppKit
 import ArgumentParser
 
+enum Effect: String, CaseIterable, ExpressibleByArgument {
+    case confetti
+    case pulse
+    case none
+}
+
 enum AppIcon: String, CaseIterable, ExpressibleByArgument {
     case party
     case bell
@@ -50,6 +56,7 @@ struct ConfettiConfig {
     let colors: [NSColor]
     let duration: Double
     let density: Double
+    let effect: Effect
     let showNotification: Bool
     let url: String?
     let icon: AppIcon

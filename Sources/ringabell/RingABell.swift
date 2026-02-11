@@ -31,6 +31,9 @@ struct RingABell: ParsableCommand {
     @Option(help: "Notification icon (party, bell, sparkles, confetti, checkmark, star, rocket, fire)")
     var icon: AppIcon = .party
 
+    @Option(help: "Visual effect (confetti, pulse, none)")
+    var effect: Effect = .confetti
+
     @Flag(help: "Skip macOS notification")
     var noNotification: Bool = false
 
@@ -86,6 +89,7 @@ struct RingABell: ParsableCommand {
             colors: parsedColors,
             duration: duration,
             density: density,
+            effect: effect,
             showNotification: !noNotification,
             url: url,
             icon: icon

@@ -3,9 +3,9 @@ import QuartzCore
 
 enum ConfettiEmitter {
 
-    private static let initialVelocity: CGFloat  = 300
-    private static let velocitySpread: CGFloat    = 150
-    private static let gravity: CGFloat           = -150
+    private static let initialVelocity: CGFloat  = 250
+    private static let velocitySpread: CGFloat    = 200
+    private static let gravity: CGFloat           = -100
     private static let particleLifetime: Float    = 5.0
     private static let lifetimeVariance: Float    = 1.5
     private static let baseBirthRate: Float       = 6.0
@@ -14,7 +14,7 @@ enum ConfettiEmitter {
     private static let fadeRate: Float            = -0.2
     private static let spinSpeed: CGFloat         = 3.0
     private static let spinVariance: CGFloat      = 6.0
-    private static let emissionSpread: CGFloat    = .pi / 4
+    private static let emissionSpread: CGFloat    = .pi / 2
 
     static func makeLayer(
         screenSize: CGSize,
