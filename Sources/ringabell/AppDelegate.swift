@@ -12,7 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
     }
 
     func applicationDidFinishLaunching(_ notification: Notification) {
-        NSApplication.shared.applicationIconImage = config.icon.render()
+        NSApplication.shared.applicationIconImage = config.icon.image()
         UNUserNotificationCenter.current().delegate = self
 
         let quiet = config.respectFocus && FocusStatus.isActive
@@ -33,8 +33,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         // Still sent under Focus: macOS holds it in Notification Center.
         if config.showNotification {
-            NotificationSender.send(title: config.title, body: config.message, url: config.url,
-                                    icon: config.icon, buttons: config.buttons)
+            NotificationSender.send(title: config.title, subtitle: config.subtitle, body: config.message,
+                                    url: config.url, icon: config.icon, buttons: config.buttons)
         }
 
         scheduleShutdown(effect: effect)

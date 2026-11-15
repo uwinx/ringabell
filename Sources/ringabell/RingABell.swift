@@ -7,11 +7,14 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.4.0"
+        version: "1.5.0"
     )
 
     @Option(help: "Notification title")
     var title: String = "ringabell"
+
+    @Option(help: "Notification subtitle")
+    var subtitle: String = ""
 
     @Option(help: "Notification body text")
     var message: String = "Ring a bell!"
@@ -33,6 +36,9 @@ struct RingABell: ParsableCommand {
 
     @Option(help: "Notification icon (party, bell, sparkles, confetti, checkmark, star, rocket, fire)")
     var icon: AppIcon = .party
+
+    @Option(help: ArgumentHelp("Custom notification image (png, jpg, gif; max 10 MB). Overrides --icon", valueName: "path"))
+    var iconFile: String? = nil
 
     @Option(help: "Visual effect (confetti, pulse, none)")
     var effect: Effect = .confetti
@@ -64,6 +70,23 @@ struct RingABell: ParsableCommand {
                 throw ValidationError("invalid button format '\(b)', expected \"Title:action\"")
             }
         }
+        if let url = iconFileURL {
+            guard NotificationIcon.fileExtensions.contains(url.pathExtension.lowercased()) else {
+                throw ValidationError("--icon-file must be a png, jpg or gif image")
+            }
+            guard let size = try? url.resourceValues(forKeys: [.fileSizeKey, .isRegularFileKey]),
+                  size.isRegularFile == true else {
+                throw ValidationError("--icon-file '\(url.path)' does not exist")
+            }
+            // UNNotificationAttachment rejects images over 10 MB.
+            guard (size.fileSize ?? 0) <= 10_000_000 else {
+                throw ValidationError("--icon-file must be at most 10 MB")
+            }
+        }
+    }
+
+    private var iconFileURL: URL? {
+        iconFile.map { URL(fileURLWithPath: NSString(string: $0).expandingTildeInPath).standardizedFileURL }
     }
 
     // Re-exec with clean environment to work around SIGBUS caused by
@@ -111,6 +134,7 @@ struct RingABell: ParsableCommand {
 
         let config = ConfettiConfig(
             title: ConfettiConfig.templateReplace(title, context: context),
+            subtitle: ConfettiConfig.templateReplace(subtitle, context: context),
             message: ConfettiConfig.templateReplace(message, context: context),
             soundName: sound,
             colors: parsedColors,
@@ -120,7 +144,7 @@ struct RingABell: ParsableCommand {
             showNotification: !noNotification,
             respectFocus: !ignoreDnd,
             url: url,
-            icon: icon,
+            icon: iconFileURL.map(NotificationIcon.file) ?? .emoji(icon),
             context: context,
             buttons: buttons
         )

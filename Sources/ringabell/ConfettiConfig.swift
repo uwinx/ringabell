@@ -49,6 +49,20 @@ enum AppIcon: String, CaseIterable, ExpressibleByArgument {
 
 }
 
+enum NotificationIcon {
+    case emoji(AppIcon)
+    case file(URL)
+
+    static let fileExtensions: Set<String> = ["png", "jpg", "jpeg", "gif"]
+
+    func image() -> NSImage? {
+        switch self {
+        case .emoji(let icon): return icon.render()
+        case .file(let url):   return NSImage(contentsOf: url)
+        }
+    }
+}
+
 struct NotificationButton {
     let id: String
     let title: String
@@ -59,6 +73,7 @@ struct ConfettiConfig {
     static let defaultColors = "red,green,blue,yellow,orange,purple"
 
     let title: String
+    let subtitle: String
     let message: String
     let soundName: String
     let colors: [NSColor]
@@ -68,7 +83,7 @@ struct ConfettiConfig {
     let showNotification: Bool
     let respectFocus: Bool
     let url: String?
-    let icon: AppIcon
+    let icon: NotificationIcon
     let context: String?
     let buttons: [NotificationButton]
 
