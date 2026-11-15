@@ -7,7 +7,7 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.5.0"
+        version: "1.6.0"
     )
 
     @Option(help: "Notification title")
@@ -55,6 +55,12 @@ struct RingABell: ParsableCommand {
     @Flag(help: "Show effect and play sound even when Do Not Disturb / Focus is on")
     var ignoreDnd: Bool = false
 
+    @Flag(help: "Skip system sound")
+    var noSound: Bool = false
+
+    @Flag(help: "List available system sounds and exit")
+    var listSounds: Bool = false
+
     func validate() throws {
         guard (0.5...30).contains(duration) else {
             throw ValidationError("--duration must be between 0.5 and 30 seconds")
@@ -68,6 +74,11 @@ struct RingABell: ParsableCommand {
         for b in button {
             guard b.split(separator: ":", maxSplits: 1).count == 2 else {
                 throw ValidationError("invalid button format '\(b)', expected \"Title:action\"")
+            }
+        }
+        if let url {
+            guard URL(string: url)?.scheme != nil else {
+                throw ValidationError("--url '\(url)' is not a URL with a scheme (e.g. https://, slack://)")
             }
         }
         if let url = iconFileURL {
@@ -120,6 +131,11 @@ struct RingABell: ParsableCommand {
     }
 
     func run() throws {
+        if listSounds {
+            SoundPlayer.availableSounds().forEach { print($0) }
+            throw ExitCode.success
+        }
+
         var parsedColors = ConfettiConfig.parseColors(colors)
         if parsedColors.isEmpty {
             fputs("ringabell: no valid colors in '\(colors)', using defaults\n", stderr)
@@ -141,6 +157,7 @@ struct RingABell: ParsableCommand {
             duration: duration,
             density: density,
             effect: effect,
+            playSound: !noSound,
             showNotification: !noNotification,
             respectFocus: !ignoreDnd,
             url: url,

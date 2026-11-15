@@ -31,6 +31,7 @@ enum NotificationSender {
                                   attachment: attachment, hasButtons: !buttons.isEmpty)
                     } else {
                         fputs("ringabell: notification permission denied\n", stderr)
+                        Self.discard(attachment)
                     }
                 }
             case .authorized, .provisional:
@@ -38,6 +39,7 @@ enum NotificationSender {
                           attachment: attachment, hasButtons: !buttons.isEmpty)
             default:
                 fputs("ringabell: notification permission denied\n", stderr)
+                Self.discard(attachment)
             }
         }
     }
@@ -69,8 +71,15 @@ enum NotificationSender {
         center.add(request) { error in
             if let error {
                 fputs("ringabell: failed to send notification: \(error)\n", stderr)
+                Self.discard(attachment)
             }
         }
+    }
+
+    // A posted attachment's file is moved into the notification store; one that never gets posted stays in TMPDIR.
+    private static func discard(_ attachment: UNNotificationAttachment?) {
+        guard let attachment else { return }
+        try? FileManager.default.removeItem(at: attachment.url)
     }
 
     private static func iconAttachment(_ icon: NotificationIcon) -> UNNotificationAttachment? {

@@ -80,6 +80,7 @@ struct ConfettiConfig {
     let duration: Double
     let density: Double
     let effect: Effect
+    let playSound: Bool
     let showNotification: Bool
     let respectFocus: Bool
     let url: String?

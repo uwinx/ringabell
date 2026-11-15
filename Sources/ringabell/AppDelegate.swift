@@ -27,7 +27,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             break
         }
 
-        if !quiet {
+        if !quiet && config.playSound {
             SoundPlayer.play(named: config.soundName)
         }
 
