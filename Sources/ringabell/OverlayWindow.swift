@@ -14,7 +14,7 @@ final class OverlayWindow: NSWindow {
         level = .statusBar
         ignoresMouseEvents = true
         hasShadow = false
-        collectionBehavior = [.canJoinAllSpaces, .stationary]
+        collectionBehavior = [.canJoinAllSpaces, .stationary, .fullScreenAuxiliary]
     }
 
     override var canBecomeKey: Bool { false }
