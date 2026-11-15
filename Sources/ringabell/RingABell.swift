@@ -7,7 +7,7 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.0.0"
+        version: "1.2.0"
     )
 
     @Option(help: "Notification body text")
@@ -34,6 +34,12 @@ struct RingABell: ParsableCommand {
     @Option(help: "Visual effect (confetti, pulse, none)")
     var effect: Effect = .confetti
 
+    @Option(help: "JSON context for template interpolation and button script stdin")
+    var context: String? = nil
+
+    @Option(help: ArgumentHelp("Notification button as \"Title:shell command\" (max 4). One button shows inline; several collapse into an Options menu and hide --icon", valueName: "title:action"))
+    var button: [String] = []
+
     @Flag(help: "Skip macOS notification")
     var noNotification: Bool = false
 
@@ -43,6 +49,14 @@ struct RingABell: ParsableCommand {
         }
         guard (0.1...5.0).contains(density) else {
             throw ValidationError("--density must be between 0.1 and 5.0")
+        }
+        guard button.count <= 4 else {
+            throw ValidationError("maximum 4 buttons allowed (macOS limitation)")
+        }
+        for b in button {
+            guard b.split(separator: ":", maxSplits: 1).count == 2 else {
+                throw ValidationError("invalid button format '\(b)', expected \"Title:action\"")
+            }
         }
     }
 
@@ -83,8 +97,14 @@ struct RingABell: ParsableCommand {
             parsedColors = ConfettiConfig.parseColors(ConfettiConfig.defaultColors)
         }
 
+        let buttons = button.enumerated().map { index, spec -> NotificationButton in
+            let parts = spec.split(separator: ":", maxSplits: 1)
+            let title = ConfettiConfig.templateReplace(String(parts[0]), context: context)
+            return NotificationButton(id: "button-\(index)", title: title, action: String(parts[1]))
+        }
+
         let config = ConfettiConfig(
-            message: message,
+            message: ConfettiConfig.templateReplace(message, context: context),
             soundName: sound,
             colors: parsedColors,
             duration: duration,
@@ -92,7 +112,9 @@ struct RingABell: ParsableCommand {
             effect: effect,
             showNotification: !noNotification,
             url: url,
-            icon: icon
+            icon: icon,
+            context: context,
+            buttons: buttons
         )
 
         let app = NSApplication.shared

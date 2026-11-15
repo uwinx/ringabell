@@ -1,5 +1,6 @@
 import AppKit
 import ArgumentParser
+import Foundation
 
 enum Effect: String, CaseIterable, ExpressibleByArgument {
     case confetti
@@ -48,6 +49,12 @@ enum AppIcon: String, CaseIterable, ExpressibleByArgument {
 
 }
 
+struct NotificationButton {
+    let id: String
+    let title: String
+    let action: String
+}
+
 struct ConfettiConfig {
     static let defaultColors = "red,green,blue,yellow,orange,purple"
 
@@ -60,6 +67,40 @@ struct ConfettiConfig {
     let showNotification: Bool
     let url: String?
     let icon: AppIcon
+    let context: String?
+    let buttons: [NotificationButton]
+
+    static func templateReplace(_ template: String, context json: String?) -> String {
+        guard let json, let data = json.data(using: .utf8),
+              let obj = try? JSONSerialization.jsonObject(with: data) as? [String: Any]
+        else { return template }
+
+        var result = template
+        let pattern = try! NSRegularExpression(pattern: #"\{\{(\w+(?:\.\w+)*)\}\}"#)
+        let matches = pattern.matches(in: result, range: NSRange(result.startIndex..., in: result))
+
+        for match in matches.reversed() {
+            guard let keyRange = Range(match.range(at: 1), in: result) else { continue }
+            let keyPath = String(result[keyRange])
+            if let value = resolve(keyPath: keyPath, in: obj) {
+                let fullRange = Range(match.range, in: result)!
+                result.replaceSubrange(fullRange, with: value)
+            }
+        }
+        return result
+    }
+
+    private static func resolve(keyPath: String, in obj: [String: Any]) -> String? {
+        let keys = keyPath.split(separator: ".").map(String.init)
+        var current: Any = obj
+        for key in keys {
+            guard let dict = current as? [String: Any], let next = dict[key] else { return nil }
+            current = next
+        }
+        if let s = current as? String { return s }
+        if let n = current as? NSNumber { return n.stringValue }
+        return nil
+    }
 
     static func parseColors(_ csv: String) -> [NSColor] {
         csv.split(separator: ",")

@@ -27,7 +27,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         SoundPlayer.play(named: config.soundName)
 
         if config.showNotification {
-            NotificationSender.send(title: "ringabell", body: config.message, url: config.url, icon: config.icon)
+            NotificationSender.send(title: "ringabell", body: config.message, url: config.url,
+                                    icon: config.icon, buttons: config.buttons)
         }
 
         scheduleShutdown()
@@ -84,7 +85,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             self?.tearDownOverlay()
         }
 
-        let deadline = config.url != nil ? visualDuration + 30 : visualDuration
+        let hasInteraction = config.url != nil || !config.buttons.isEmpty
+        let deadline = hasInteraction ? max(visualDuration, 120) : visualDuration
         DispatchQueue.main.asyncAfter(deadline: .now() + deadline) {
             NSApplication.shared.terminate(nil)
         }
@@ -103,7 +105,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         didReceive response: UNNotificationResponse,
         withCompletionHandler completionHandler: @escaping () -> Void
     ) {
-        if response.actionIdentifier == UNNotificationDefaultActionIdentifier,
+        let actionId = response.actionIdentifier
+
+        if actionId == UNNotificationDefaultActionIdentifier,
            let urlString = response.notification.request.content.userInfo["url"] as? String,
            let url = URL(string: urlString) {
             DispatchQueue.main.async {
@@ -112,7 +116,41 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                     NSApplication.shared.terminate(nil)
                 }
             }
+        } else if actionId.hasPrefix("button-"),
+                  let button = config.buttons.first(where: { $0.id == actionId }) {
+            DispatchQueue.global(qos: .userInitiated).async { [config] in
+                let process = Process()
+                process.executableURL = URL(fileURLWithPath: "/bin/sh")
+                process.arguments = ["-c", button.action]
+
+                let stdin = Pipe()
+                process.standardInput = config.context == nil ? FileHandle.nullDevice : stdin
+
+                guard (try? process.run()) != nil else {
+                    fputs("ringabell: failed to run button action\n", stderr)
+                    DispatchQueue.main.async { NSApplication.shared.terminate(nil) }
+                    return
+                }
+
+                // Write after launch and off this thread: a context larger than the pipe
+                // buffer blocks until the script reads it, and a script that never reads
+                // stdin must not stall waitUntilExit or kill us with SIGPIPE.
+                if let data = config.context?.data(using: .utf8) {
+                    signal(SIGPIPE, SIG_IGN)
+                    DispatchQueue.global(qos: .userInitiated).async {
+                        try? stdin.fileHandleForWriting.write(contentsOf: data)
+                        try? stdin.fileHandleForWriting.close()
+                    }
+                }
+
+                process.waitUntilExit()
+
+                DispatchQueue.main.async {
+                    NSApplication.shared.terminate(nil)
+                }
+            }
         }
+
         completionHandler()
     }
 
