@@ -7,7 +7,7 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.2.0"
+        version: "1.3.0"
     )
 
     @Option(help: "Notification body text")
@@ -42,6 +42,9 @@ struct RingABell: ParsableCommand {
 
     @Flag(help: "Skip macOS notification")
     var noNotification: Bool = false
+
+    @Flag(help: "Show effect and play sound even when Do Not Disturb / Focus is on")
+    var ignoreDnd: Bool = false
 
     func validate() throws {
         guard (0.5...30).contains(duration) else {
@@ -111,6 +114,7 @@ struct RingABell: ParsableCommand {
             density: density,
             effect: effect,
             showNotification: !noNotification,
+            respectFocus: !ignoreDnd,
             url: url,
             icon: icon,
             context: context,

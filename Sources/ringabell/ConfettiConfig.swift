@@ -65,6 +65,7 @@ struct ConfettiConfig {
     let density: Double
     let effect: Effect
     let showNotification: Bool
+    let respectFocus: Bool
     let url: String?
     let icon: AppIcon
     let context: String?

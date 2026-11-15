@@ -15,7 +15,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         NSApplication.shared.applicationIconImage = config.icon.render()
         UNUserNotificationCenter.current().delegate = self
 
-        switch config.effect {
+        let quiet = config.respectFocus && FocusStatus.isActive
+        let effect = quiet ? .none : config.effect
+
+        switch effect {
         case .confetti:
             showConfetti()
         case .pulse:
@@ -24,14 +27,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
             break
         }
 
-        SoundPlayer.play(named: config.soundName)
+        if !quiet {
+            SoundPlayer.play(named: config.soundName)
+        }
 
+        // Still sent under Focus: macOS holds it in Notification Center.
         if config.showNotification {
             NotificationSender.send(title: "ringabell", body: config.message, url: config.url,
                                     icon: config.icon, buttons: config.buttons)
         }
 
-        scheduleShutdown()
+        scheduleShutdown(effect: effect)
     }
 
     private func showConfetti() {
@@ -70,9 +76,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         }
     }
 
-    private func scheduleShutdown() {
+    private func scheduleShutdown(effect: Effect) {
         let visualDuration: Double
-        switch config.effect {
+        switch effect {
         case .confetti:
             visualDuration = config.duration
         case .pulse:
