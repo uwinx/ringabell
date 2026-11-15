@@ -40,8 +40,24 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         scheduleShutdown(effect: effect)
     }
 
+    private func targetScreens() -> [NSScreen] {
+        switch config.screen {
+        case .all:
+            return NSScreen.screens
+        case .main:
+            return [NSScreen.main].compactMap { $0 }
+        case .index(let i):
+            let screens = NSScreen.screens
+            guard i < screens.count else {
+                fputs("ringabell: screen index \(i) out of range (have \(screens.count)), using main\n", stderr)
+                return [NSScreen.main].compactMap { $0 }
+            }
+            return [screens[i]]
+        }
+    }
+
     private func showConfetti() {
-        for screen in NSScreen.screens {
+        for screen in targetScreens() {
             let bounds = CGRect(origin: .zero, size: screen.frame.size)
             let window = OverlayWindow(screen: screen)
             let view = ConfettiView(frame: bounds)
@@ -63,7 +79,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
     private func showPulse() {
         let color = config.colors.first ?? .white
-        for screen in NSScreen.screens {
+        for screen in targetScreens() {
             let bounds = CGRect(origin: .zero, size: screen.frame.size)
             let window = OverlayWindow(screen: screen)
             let view = PulseView(frame: bounds, color: color)

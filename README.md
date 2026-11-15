@@ -23,6 +23,7 @@ ringabell [options]
 | `--colors` | default palette | Comma-separated color names or `#hex` values |
 | `--duration` | `3.5` | Seconds before auto-dismiss (0.5–30) |
 | `--density` | `1.0` | Particle birthRate multiplier (0.1–5.0) |
+| `--screen` | `all` | Screen for the visual effect: `all`, `main`, or a 0-based index in `NSScreen.screens` order (0 is the menu-bar display). An out-of-range index falls back to `main` |
 | `--url` | — | URL/deeplink to open when notification is clicked |
 | `--icon-file` | — | Custom notification image (png, jpg, gif; max 10 MB). Overrides `--icon` |
 | `--no-notification` | off | Skip macOS notification |

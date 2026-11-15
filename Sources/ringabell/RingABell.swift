@@ -7,7 +7,7 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.6.0"
+        version: "1.7.0"
     )
 
     @Option(help: "Notification title")
@@ -42,6 +42,9 @@ struct RingABell: ParsableCommand {
 
     @Option(help: "Visual effect (confetti, pulse, none)")
     var effect: Effect = .confetti
+
+    @Option(help: ArgumentHelp("Screen for the visual effect: all, main, or a 0-based index", valueName: "all|main|index"))
+    var screen: ScreenTarget = .all
 
     @Option(help: "JSON context for template interpolation and button script stdin")
     var context: String? = nil
@@ -157,6 +160,7 @@ struct RingABell: ParsableCommand {
             duration: duration,
             density: density,
             effect: effect,
+            screen: screen,
             playSound: !noSound,
             showNotification: !noNotification,
             respectFocus: !ignoreDnd,

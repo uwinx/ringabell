@@ -8,6 +8,30 @@ enum Effect: String, CaseIterable, ExpressibleByArgument {
     case none
 }
 
+enum ScreenTarget: ExpressibleByArgument, CustomStringConvertible {
+    case all
+    case main
+    case index(Int)
+
+    init?(argument: String) {
+        switch argument.lowercased() {
+        case "all":  self = .all
+        case "main": self = .main
+        default:
+            guard let i = Int(argument), i >= 0 else { return nil }
+            self = .index(i)
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .all:          return "all"
+        case .main:         return "main"
+        case .index(let i): return String(i)
+        }
+    }
+}
+
 enum AppIcon: String, CaseIterable, ExpressibleByArgument {
     case party
     case bell
@@ -80,6 +104,7 @@ struct ConfettiConfig {
     let duration: Double
     let density: Double
     let effect: Effect
+    let screen: ScreenTarget
     let playSound: Bool
     let showNotification: Bool
     let respectFocus: Bool
