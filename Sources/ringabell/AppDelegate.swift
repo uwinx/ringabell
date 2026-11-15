@@ -15,6 +15,15 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
         NSApplication.shared.applicationIconImage = config.icon.image()
         UNUserNotificationCenter.current().delegate = self
 
+        // A click on a notification whose process already exited relaunches the app with no args.
+        // Ringing with defaults here would post a new notification on every click.
+        if notification.userInfo?[NSApplication.launchUserNotificationUserInfoKey] != nil {
+            DispatchQueue.main.asyncAfter(deadline: .now() + 2) {
+                NSApplication.shared.terminate(nil)
+            }
+            return
+        }
+
         let quiet = config.respectFocus && FocusStatus.isActive
         let effect = quiet ? .none : config.effect
 
