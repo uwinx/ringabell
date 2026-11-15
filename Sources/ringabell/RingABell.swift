@@ -7,8 +7,11 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.3.0"
+        version: "1.4.0"
     )
+
+    @Option(help: "Notification title")
+    var title: String = "ringabell"
 
     @Option(help: "Notification body text")
     var message: String = "Ring a bell!"
@@ -107,6 +110,7 @@ struct RingABell: ParsableCommand {
         }
 
         let config = ConfettiConfig(
+            title: ConfettiConfig.templateReplace(title, context: context),
             message: ConfettiConfig.templateReplace(message, context: context),
             soundName: sound,
             colors: parsedColors,

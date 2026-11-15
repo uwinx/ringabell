@@ -16,6 +16,7 @@ ringabell [options]
 
 | Flag | Default | Description |
 |------|---------|-------------|
+| `--title` | `"ringabell"` | Notification title |
 | `--message` | `"Ring a bell!"` | Notification body text |
 | `--sound` | `"Glass"` | System sound name (Glass, Hero, Ping, etc.) |
 | `--colors` | default palette | Comma-separated color names or `#hex` values |

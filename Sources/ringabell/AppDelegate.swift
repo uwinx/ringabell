@@ -33,7 +33,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         // Still sent under Focus: macOS holds it in Notification Center.
         if config.showNotification {
-            NotificationSender.send(title: "ringabell", body: config.message, url: config.url,
+            NotificationSender.send(title: config.title, body: config.message, url: config.url,
                                     icon: config.icon, buttons: config.buttons)
         }
 

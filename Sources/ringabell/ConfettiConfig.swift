@@ -58,6 +58,7 @@ struct NotificationButton {
 struct ConfettiConfig {
     static let defaultColors = "red,green,blue,yellow,orange,purple"
 
+    let title: String
     let message: String
     let soundName: String
     let colors: [NSColor]
