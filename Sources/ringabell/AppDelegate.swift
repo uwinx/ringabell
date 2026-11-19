@@ -5,6 +5,7 @@ import UserNotifications
 final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCenterDelegate {
     private let config: ConfettiConfig
     private var windows: [OverlayWindow] = []
+    private var pushTask: Task<Bool, Never>?
 
     nonisolated init(config: ConfettiConfig) {
         self.config = config
@@ -22,6 +23,13 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
                 NSApplication.shared.terminate(nil)
             }
             return
+        }
+
+        if let push = config.push {
+            pushTask = Task { [config] in
+                let body = config.subtitle.isEmpty ? config.message : "\(config.subtitle)\n\(config.message)"
+                return await Pushover.send(title: config.title, body: body, url: config.url, config: push)
+            }
         }
 
         let quiet = config.respectFocus && FocusStatus.isActive
@@ -118,7 +126,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate, UNUserNotificationCent
 
         let hasInteraction = config.url != nil || !config.buttons.isEmpty
         let deadline = hasInteraction ? max(visualDuration, 120) : visualDuration
-        DispatchQueue.main.asyncAfter(deadline: .now() + deadline) {
+        DispatchQueue.main.asyncAfter(deadline: .now() + deadline) { [weak self] in
+            self?.terminateAfterPush()
+        }
+    }
+
+    private func terminateAfterPush() {
+        Task {
+            guard await pushTask?.value ?? true else { exit(EXIT_FAILURE) }
             NSApplication.shared.terminate(nil)
         }
     }

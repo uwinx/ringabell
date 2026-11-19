@@ -112,6 +112,7 @@ struct ConfettiConfig {
     let icon: NotificationIcon
     let context: String?
     let buttons: [NotificationButton]
+    let push: PushoverConfig?
 
     static func templateReplace(_ template: String, context json: String?) -> String {
         guard let json, let data = json.data(using: .utf8),

@@ -13,7 +13,8 @@ let package = Package(
             name: "ringabell",
             dependencies: [
                 .product(name: "ArgumentParser", package: "swift-argument-parser"),
-            ]
+            ],
+            linkerSettings: [.linkedLibrary("z")]
         ),
     ]
 )

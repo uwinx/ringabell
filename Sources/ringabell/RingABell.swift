@@ -7,7 +7,7 @@ struct RingABell: ParsableCommand {
     static let configuration = CommandConfiguration(
         commandName: "ringabell",
         abstract: "Splash confetti on screen with sound and notification",
-        version: "1.7.0"
+        version: "1.8.0"
     )
 
     @Option(help: "Notification title")
@@ -51,6 +51,15 @@ struct RingABell: ParsableCommand {
 
     @Option(help: ArgumentHelp("Notification button as \"Title:shell command\" (max 4). One button shows inline; several collapse into an Options menu and hide --icon", valueName: "title:action"))
     var button: [String] = []
+
+    @Option(help: ArgumentHelp("Also push to your phone, end-to-end encrypted. Reads PUSHOVER_TOKEN, PUSHOVER_USER, PUSHOVER_E2E_KEY from the environment or --pushover-config. With --ignore-dnd, sends emergency priority that repeats until acknowledged", valueName: "pushover"))
+    var push: PushTarget? = nil
+
+    @Option(help: ArgumentHelp("Private (chmod 600) file with PUSHOVER_TOKEN=, PUSHOVER_USER=, PUSHOVER_E2E_KEY= lines, used instead of the environment", valueName: "path"))
+    var pushoverConfig: String? = nil
+
+    @Option(help: ArgumentHelp("Pushover sound, built-in or uploaded (default: persistent with --ignore-dnd, else your Pushover default)", valueName: "name"))
+    var pushSound: String? = nil
 
     @Flag(help: "Skip macOS notification")
     var noNotification: Bool = false
@@ -97,6 +106,20 @@ struct RingABell: ParsableCommand {
                 throw ValidationError("--icon-file must be at most 10 MB")
             }
         }
+        if (pushoverConfig != nil || pushSound != nil) && push != .pushover {
+            throw ValidationError("--pushover-config and --push-sound need --push pushover")
+        }
+        _ = try loadPush()
+    }
+
+    private func loadPush() throws -> PushoverConfig? {
+        switch push {
+        case .pushover:
+            let file = pushoverConfig.map { URL(fileURLWithPath: NSString(string: $0).expandingTildeInPath) }
+            return try PushoverConfig.load(file: file, emergency: ignoreDnd, sound: pushSound)
+        case nil:
+            return nil
+        }
     }
 
     private var iconFileURL: URL? {
@@ -108,7 +131,7 @@ struct RingABell: ParsableCommand {
     static func main() {
         if getenv("_RINGABELL") == nil {
             let pass = ["HOME", "PATH", "TMPDIR", "USER", "LOGNAME", "SHELL",
-                        "SSH_AUTH_SOCK", "LANG", "LC_ALL", "LC_CTYPE", "TERM"]
+                        "SSH_AUTH_SOCK", "LANG", "LC_ALL", "LC_CTYPE", "TERM"] + PushoverConfig.environmentVars
             var env = pass.compactMap { k -> String? in
                 guard let v = getenv(k) else { return nil }
                 return "\(k)=\(String(cString: v))"
@@ -167,7 +190,8 @@ struct RingABell: ParsableCommand {
             url: url,
             icon: iconFileURL.map(NotificationIcon.file) ?? .emoji(icon),
             context: context,
-            buttons: buttons
+            buttons: buttons,
+            push: try loadPush()
         )
 
         let app = NSApplication.shared
